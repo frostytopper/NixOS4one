@@ -125,7 +125,7 @@
 
   nix.settings = {
     substituters = ["http://localhost:5000/" "https://cache.nixos.org/"];
-    trusted-public-keys = ["nixos.local-1:X+ss+l4yzAI6brxtyYHRcjgxwei83KM25Prc37wnXCk="];
+    trusted-public-keys = [create your own key and put it here;
   };
 
   # Enable networking
@@ -205,7 +205,7 @@
   services.postgresql = {
     enable = true;
     package = pkgs.postgresql_17;
-    ensureDatabases = ["psychobiotic_db" "frosty"];
+    ensureDatabases = ["projectDBname" "frosty"];
     ensureUsers = [
       {
         name = "frosty";
@@ -328,7 +328,6 @@
     #python313Packages.numpy
     #python313Packages.scipy
     vim
-    #need decide how to install NVChad
     nodejs_20
 
     ##terminal-options
@@ -348,14 +347,7 @@
     ##Networking - Replacing nginx with angie
     angie
 
-    ##Git-setup
     gitFull
-    #gitmux
-    ##tmux-nerdfonts
-    #github.com/joshmedeski/tmux-nerd-font-window-name
-
-    #shell-options
-    #fish #explore fish specific managers like fisher to establish a setup before declaring in nix. You can create a fish flake later.
 
     #terminaltools
     aria2 #better curl? going to try it out.
@@ -398,9 +390,9 @@
     ##graphics
     driversi686Linux.libva-vdpau-driver
 
-    (writeShellScriptBin "tks" ''
-      # Attach to session "rks" if it exists, otherwise create it.
-      exec tmux new-session -A -s rks "$@"
+    (writeShellScriptBin "fancy" ''
+      # Attach to session "fancy" if it exists, otherwise create it.
+      exec tmux new-session -A -s fancy "$@"
     '')
   ];
 

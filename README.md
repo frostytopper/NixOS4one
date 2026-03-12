@@ -1,4 +1,4 @@
-## The below was written with AI. This is me, FrostyTopper, typing to you directly. This is a side/passion project for me. Since so much of this ecosystem is always full of dialogue about how to build things that you can take anywhere, pull from everywhere, it gets pretty tedious finding clear examples that approach it soley from a personal user one a single machine perspective.
+## The below was written with AI. This is me, FrostyTopper, typing to you directly. This is a side/passion project for me. Since so much of this ecosystem is always full of dialogue about how to build things that you can take anywhere, pull from everywhere, it gets pretty tedious finding clear examples that approach it soley from a personal user on a single machine perspective.
 ## Currently (3/12/26) I am going to organize the configuration.nix a little more. Then do a little documentation and modularization to make navigating the configuration a less clunky. After that, Devenv/TMUX/nix-serve is going to be hit because that's what my projects need :)
 
 # NixOS4one

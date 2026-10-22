@@ -59,11 +59,13 @@ current generation of models is unusually good at Nix:
   point the model at the repo, and get a full-file rewrite back instead of
   fragments you have to stitch.
 - The feedback loop is cheap: ask for a change → `nixos-rebuild build` to
-  verify it evaluates → `switch` if the build passes. But just because it
-  builds doesn't automatically mean it works, so fun 'nixos-rebuild test'
-  to activate it without writing it to the boot log, so rolling back is as
-  simple as rebooting. Iterating on a prompt is faster than reading the manual end-to-end when you
-  already know roughly what you want.
+  verify it evaluates → `nixos-rebuild test` to activate it live without
+  making it the boot default — if it breaks your desktop or network, a
+  reboot puts you back on your last good config → `switch` only once it
+  proves out. And even a bad `switch` is survivable, since the boot menu
+  keeps your previous generations. Iterating on a prompt is faster than
+  reading the manual end-to-end when you already know roughly what you
+  want.
 
 Two caveats that keep this honest: always sanity-check unfamiliar option
 names against <https://search.nixos.org/options> (models do occasionally

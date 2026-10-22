@@ -20,14 +20,15 @@ Everything below is live in the config right now:
   `pull.rebase`, `main` default branch, and nvim as editor
 - **Editor** — Neovim managed by NixOS itself: treesitter with all grammars,
   LSP enabled against system-installed servers (basedpyright, ruff, nixd,
-  lua_ls), telescope, oil.nvim, lualine, devicons — no plugin manager, ever
+  lua_ls), telescope, oil.nvim, lualine, devicons — no plugin manager, unless
+  absolutely unavoidable
 - **Persistent tmux** — a `tmux-main` systemd service starts a detached
   `main` session at boot as your user, so there's always a session to attach
   to (Ghostty or SSH, doesn't matter which)
 - **Services** — PostgreSQL with your user and a scratch database ready
   (`createdb` right granted), Tailscale, OpenSSH, CUPS printing, PipeWire
 - **Dev tooling** — Python 3.14 with uv, Node, Lua, Rust toolchain pieces,
-  na-direnv for per-project environments, plus a lint/format bench:
+  nix-direnv for per-project environments, plus a lint/format bench:
   ruff, mypy, ty, sqlfluff, stylua, alejandra, nil + nixd
 - **Quality of life** — eza, bat, fd, ripgrep, jq/yq/xq, miller, pandoc,
   pup, htop, rustscan, Ghostty terminal, Nerd Fonts (BlexMono, FiraMono,
@@ -58,10 +59,11 @@ current generation of models is unusually good at Nix:
   point the model at the repo, and get a full-file rewrite back instead of
   fragments you have to stitch.
 - The feedback loop is cheap: ask for a change → `nixos-rebuild build` to
-  verify it evaluates → `switch` if the build passes. If it breaks, the boot
-  menu still has your previous generation. Iterating on a prompt is faster
-  than reading the manual end-to-end when you already know roughly what you
-  want.
+  verify it evaluates → `switch` if the build passes. But just because it
+  builds doesn't automatically mean it works, so fun 'nixos-rebuild test'
+  to activate it without writing it to the boot log, so rolling back is as
+  simple as rebooting. Iterating on a prompt is faster than reading the manual end-to-end when you
+  already know roughly what you want.
 
 Two caveats that keep this honest: always sanity-check unfamiliar option
 names against <https://search.nixos.org/options> (models do occasionally

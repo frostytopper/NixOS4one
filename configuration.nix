@@ -5,7 +5,14 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  # Fork me: these three values personalize the whole system.
+  vars = {
+    username = "brian";
+    hostName = "lati";
+    timeZone = "America/Los_Angeles";
+  };
+in {
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -17,11 +24,11 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "lati"; # Define your hostname.
+  networking.hostName = vars.hostName; # Define your hostname.
   networking.networkmanager.enable = true;
 
   # -- Locale / Time --
-  time.timeZone = "America/Los_Angeles";
+  time.timeZone = vars.timeZone;
   i18n.defaultLocale = "en_US.UTF-8";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
@@ -157,7 +164,7 @@
     ensureDatabases = ["scratch"];
     ensureUsers = [
       {
-        name = "brian";
+        name = vars.username;
         ensureClauses = {createdb = true;};
       }
     ];
@@ -173,7 +180,7 @@
 
     serviceConfig = {
       Type = "forking";
-      User = "brian";
+      User = vars.username;
       Group = "users";
       ExecStart = "${pkgs.tmux}/bin/tmux new-session -d -s main";
       ExecStop = "${pkgs.tmux}/bin/tmux kill-session -t main";
@@ -190,9 +197,9 @@
   ];
 
   # -- User --
-  users.users."brian" = {
+  users.users.${vars.username} = {
     isNormalUser = true;
-    description = "frozt";
+    description = vars.username;
     shell = pkgs.fish;
     extraGroups = ["networkmanager" "wheel"];
     packages = with pkgs; [

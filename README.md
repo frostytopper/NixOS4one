@@ -74,13 +74,14 @@ the point is to *learn* Nix by iterating, not to rubber-stamp.
 
 ## Making It Yours
 
-1. Rename `networking.hostName` and the `users.users."brian"` entry; set the
-   new user's groups and shell as needed
-2. Change the PostgreSQL `ensureUsers` / `ensureDatabases` entries to match
-3. Set your own `time.timeZone` (currently `America/Los_Angeles`)
-4. Run `nixos-facter` on your hardware and commit the resulting
+1. Edit the `vars` attrset at the top of `configuration.nix` — `username`,
+   `hostName`, and `timeZone` — and the user account, PostgreSQL access,
+   and the persistent tmux session all follow automatically
+2. Set the new user's password after install with `passwd` (the one thing
+   `vars` can't — and shouldn't — capture)
+3. Run `nixos-facter` on your hardware and commit the resulting
    `facter.json`; delete the reference while testing on other machines
-5. Trim or extend the package lists — every section is commented by purpose
+4. Trim or extend the package lists — every section is commented by purpose
 
 Then:
 

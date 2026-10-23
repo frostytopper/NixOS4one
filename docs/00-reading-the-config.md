@@ -1,7 +1,8 @@
 # Reading the Config, Top to Bottom
 
 `configuration.nix` is organized into labeled sections. Grep for these
-headers and read them in this order your first time through:
+headers and read them in this order your first time through the original
+config. As it evolves it may change:
 
 | Section | Grep | What It Does |
 |---|---|---|

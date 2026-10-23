@@ -11,6 +11,10 @@ The audience is the solo dev: someone who wants a full workstation with real
 services (database, VPN mesh, persistent terminal sessions, LSP-backed
 editor) without maintaining a meta-framework on top of their OS.
 
+See `docs/` for an annotated walkthrough of the config, the reasoning behind
+each structural choice (`docs/decisions/`), and a staged upgrade path
+(`docs/upgrades/`).
+
 ## What's Inside
 
 Everything below is live in the config right now:

@@ -6,4 +6,10 @@ A system unit starts a detached `main` tmux session at boot, as the user.
 - Beats shell-profile autostart: no dependency on a display manager.
 - `Restart = "on-failure"` keeps it self-healing.
 
+
+tailscale
+devenv
+direnv
+postgres
+
 # Perplexity, this obviously needs expansion lol

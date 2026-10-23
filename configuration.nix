@@ -14,7 +14,8 @@
   };
 in {
   imports = [
-    # Include the results of the hardware scan.
+    # hardware-configuration.nix is machine-generated on the live system and
+    # LOCAL ONLY (gitignored) — hardware manifests stay off version control.
     ./hardware-configuration.nix
   ];
 

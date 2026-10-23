@@ -33,11 +33,11 @@ Everything below is live in the config right now:
 - **Quality of life** — eza, bat, fd, ripgrep, jq/yq/xq, miller, pandoc,
   pup, htop, rustscan, Ghostty terminal, Nerd Fonts (BlexMono, FiraMono,
   RobotoMono), Brave + LibreWolf
-- **Hardware detection** — `hardware.facter` reads `facter.json`, so the
-  hardware scan is data, not a hand-edited Nix file. The file is
-  **gitignored by design**: a full hardware manifest (serials, MACs,
-  component tree) is an attack-surface shopping list and never gets
-  committed
+- **Hardware detection** — `hardware.facter` reads `facter.json`, plus the
+  machine-generated `hardware-configuration.nix`, so hardware config is
+  data, not hand-edited Nix. Both files are **gitignored by design**: a
+  full hardware manifest (serials, MACs, partition UUIDs) is an
+  attack-surface shopping list and never gets committed
 
 ## Why a Single File
 
@@ -82,9 +82,9 @@ the point is to *learn* Nix by iterating, not to rubber-stamp.
    and the persistent tmux session all follow automatically
 2. Set the new user's password after install with `passwd` (the one thing
    `vars` can't — and shouldn't — capture)
-3. Run `nixos-facter` on your hardware and save the resulting `facter.json`
-   next to your live configuration — it is gitignored on purpose, so it
-   stays local and out of the repo
+3. Generate the hardware files locally and keep them out of version
+   control: `nixos-facter` for `facter.json`, and the machine-generated
+   `hardware-configuration.nix` — both are gitignored on purpose
 4. Trim or extend the package lists — every section is commented by purpose
 
 Then:

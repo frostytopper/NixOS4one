@@ -1,3 +1,5 @@
-# facter.json is a full hardware manifest (serials, MACs, component tree).
-# Generate locally with `nixos-facter`; never commit it.
+# Hardware-derived files are LOCAL ONLY — a full hardware manifest
+# (serials, MACs, partition UUIDs) is sensitive and personal to the machine.
+# Generate locally (nixos-facter, nixos-generate-config); never commit.
 facter.json
+hardware-configuration.nix

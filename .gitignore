@@ -1,0 +1,3 @@
+# facter.json is a full hardware manifest (serials, MACs, component tree).
+# Generate locally with `nixos-facter`; never commit it.
+facter.json

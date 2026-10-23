@@ -18,6 +18,8 @@ in {
     ./hardware-configuration.nix
   ];
 
+  # facter.json is generated locally by `nixos-facter` and stays LOCAL ONLY
+  # (gitignored) — a full hardware manifest does not belong in version control.
   hardware.facter.reportPath = ./facter.json;
 
   # --  Boot --

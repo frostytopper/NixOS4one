@@ -34,7 +34,10 @@ Everything below is live in the config right now:
   pup, htop, rustscan, Ghostty terminal, Nerd Fonts (BlexMono, FiraMono,
   RobotoMono), Brave + LibreWolf
 - **Hardware detection** — `hardware.facter` reads `facter.json`, so the
-  hardware scan is data in the repo, not a generated Nix file
+  hardware scan is data, not a hand-edited Nix file. The file is
+  **gitignored by design**: a full hardware manifest (serials, MACs,
+  component tree) is an attack-surface shopping list and never gets
+  committed
 
 ## Why a Single File
 
@@ -79,8 +82,9 @@ the point is to *learn* Nix by iterating, not to rubber-stamp.
    and the persistent tmux session all follow automatically
 2. Set the new user's password after install with `passwd` (the one thing
    `vars` can't — and shouldn't — capture)
-3. Run `nixos-facter` on your hardware and commit the resulting
-   `facter.json`; delete the reference while testing on other machines
+3. Run `nixos-facter` on your hardware and save the resulting `facter.json`
+   next to your live configuration — it is gitignored on purpose, so it
+   stays local and out of the repo
 4. Trim or extend the package lists — every section is commented by purpose
 
 Then:

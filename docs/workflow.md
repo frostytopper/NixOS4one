@@ -44,6 +44,8 @@ case "${1:-}" in
 esac
 ```
 
+Save it as `~/nix-config/cfg.sh`, then `chmod +x cfg.sh`.
+
 ## The workflow
 
 When an LLM proposes a config, paste it over `~/nix-config/configuration.nix` — no delete step, git is holding the old one:

@@ -1,21 +1,31 @@
 # Neovim: Consolidated customRC
 
-Drop-in replacement for the `customRC` string in `programs.neovim.configure`
-(configuration.nix). Merges the completion pass (blink.cmp) with the wiring
-fixes from the plugin audit: oil/lualine setup, treesitter on all filetypes,
-editor defaults, lua_ls runtime config, ruff/basedpyright split, diagnostics.
+> **Status: proposal — unvalidated.** Reference material only. The code
+> below has NOT been applied to configuration.nix, NOT built with
+> `nixos-rebuild`, and NOT exercised in a live Neovim session.
+> `docs/neovim/00-current-state.md` remains the record of the system as it
+> actually stands today.
 
-## Changes vs 00-current-state
+Proposed drop-in replacement for the `customRC` string in
+`programs.neovim.configure` (configuration.nix). Would merge the completion
+pass (blink.cmp) with candidate wiring for already-declared plugins:
+oil/lualine setup, treesitter on all filetypes, editor defaults, lua_ls
+runtime config, ruff/basedpyright split, diagnostics.
 
-- Fixed: oil.nvim owns `<leader>e` and `-`; netrw disabled
-- Fixed: lualine initialized (was declared, never set up)
-- Fixed: treesitter starts on every filetype (pcall-guarded); the Nix
-  autocmd now keeps only the alejandra format keymap
-- Added: clipboard=unnamedplus, scrolloff, splits, persistent undo,
-  listchars, yank highlight
-- Added: lua_ls runtime/workspace settings (kills "undefined global vim")
-- Changed: ruff hoverProvider disabled (basedpyright owns hover)
-- Added: vim.diagnostic.config + `<leader>ld` float
+## Proposed changes vs 00-current-state
+
+Nothing below is applied or running. This is the delta this proposal WOULD
+make if adopted and validated:
+
+- oil.nvim takes over `<leader>e` and `-`; netrw disabled
+- lualine initialized (today: declared, never set up)
+- treesitter starts on every filetype (pcall-guarded); the Nix autocmd
+  keeps only the alejandra format keymap
+- editor options: clipboard=unnamedplus, scrolloff, splits, persistent
+  undo, listchars, yank highlight
+- lua_ls runtime/workspace settings (suppress "undefined global vim")
+- ruff hoverProvider disabled (basedpyright owns hover)
+- vim.diagnostic.config + `<leader>ld` float
 
 ## customRC
 
@@ -178,8 +188,20 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 EOF
 ```
 
+## Validation checklist (required before adopting)
+
+- [ ] `sudo nixos-rebuild build` succeeds (no activation)
+- [ ] `sudo nixos-rebuild test`, then relaunch nvim
+- [ ] `-` and `<leader>e` open oil; netrw never appears
+- [ ] lualine renders in the statusline
+- [ ] treesitter highlighting active on .py / .lua / .md buffers
+- [ ] `:LspInfo` shows basedpyright, ruff, nixd, lua_ls attached where expected
+- [ ] no "undefined global vim" diagnostics when editing Lua
+- [ ] `<leader>nf` formats a .nix buffer via alejandra
+
 ## Notes
 
-- `${pkgs.nixd}` / `${pkgs.alejandra}` are Nix interpolations; keep this
-  block inside the nix `''...''` string, not a standalone .vim file.
-- `vim.hl.on_yank` requires Neovim 0.11+ (satisfied on 26.05 channels).
+- `${pkgs.nixd}` / `${pkgs.alejandra}` are Nix interpolations; if adopted,
+  this block must live inside the nix `''...''` string, not a standalone
+  .vim file.
+- `vim.hl.on_yank` requires Neovim 0.11+.

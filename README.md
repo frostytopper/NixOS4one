@@ -1,3 +1,28 @@
+## From the human behind this: Most current config is located here: 
+## https://github.com/frostytopper/NixOS4one/blob/main/docs/LocalGitHost/configuration_LGit_01_01.nix
+## This config includes the fantastic addition of a local bare git repo! 
+## This means you can keep track of every change OFFLINE and only push to your git holder of choice
+## when you want too. This is new to me, so I'll be exploring some utilization options.
+
+## TODO for 11/3/26 - 11/6/26
+## 1 - Setup Headscale(it's a nixpkg!) and localize control of my Tailnet
+## 2 - Setup a persistent TMUX instance that launches neovim on boot,
+## AND loads neovim on boot for the whole system... so first load has happened
+## before you ever touch the terminal and response is snappy
+## 3 - Dedicated/declared container as a system service for hosting local LLMs (They stole our data,
+## abliterated models give it back)
+## 4 - Set PATHs for anything that gets referenced for configuration
+## 5 - Unlock full hardware updates and utilize Facter hardware profile in 
+## configuration.nix for more granular control (never done this, should be interesting)
+
+##-## NixOS is a MONSTER of an OS. Turning your machine into YOUR machine is     ##-##
+##-## a beautiful thing. Unfortunately the Reproducability and Portability of    ##-##
+##-## Nixos took over the conversation, missing one of the most amazing uses     ##-##
+##-## which is wiring your system so that it takes much less effort              ##-##
+##-## to do MORE... The adventure continues!                                     ##-##
+
+#### Important Note: You, yes you, are a beautiful human! :-D                    ####
+
 # NixOS4One
 
 One user. One machine. One `configuration.nix`.

@@ -20,8 +20,12 @@ and a staged upgrade path ([`docs/upgrades/`](docs/upgrades/)).
 Working notes from the human behind this repo — dated, and pruned as things
 ship.
 
-Most current config: [`docs/LocalGitHost/configuration_LGit_01_01.nix`](docs/LocalGitHost/configuration_LGit_01_01.nix).
-This config includes the fantastic addition of a local bare git repo (see
+Most current config: [`configuration.nix`](configuration.nix) at the repo root —
+always the last confirmed-working `/etc/nixos/configuration.nix`, promoted only
+after a successful `nixos-rebuild switch`. Works in progress live as staged
+files beside their upgrade docs (e.g.
+[`docs/LocalGitHost/configuration_LGit_01_01.nix`](docs/LocalGitHost/configuration_LGit_01_01.nix)).
+The latest landed upgrade added a local bare git repo (see
 [local git hosting](docs/local-git-hosting.md)) — keep track of every change
 OFFLINE and only push to your git holder of choice when you want to. (New to
 me, so I'll be exploring some utilization options.)

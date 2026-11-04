@@ -6,7 +6,7 @@
   pkgs,
   ...
 }: let
-   # Fork Me: these three values personalize the whole system.
+  # Fork Me: these three values personalize the whole system.
   vars = {
     userName = "brian";
     fullName = "frozt"; # display name, indepenent of login name
@@ -14,13 +14,10 @@
   };
 in {
   imports = [
-    # hardware-configuration.nix is machine-generated on the live system and
-    # LOCAL ONLY (gitignored) — hardware manifests stay off version control.
+    # Include the results of the hardware scan.
     ./hardware-configuration.nix
   ];
 
-  # facter.json is generated locally by `nixos-facter` and stays LOCAL ONLY
-  # (gitignored) — a full hardware manifest does not belong in version control.
   hardware.facter.reportPath = ./facter.json;
 
   # --  Boot --
@@ -83,6 +80,8 @@ in {
   # -- Nix --
   nix.settings.experimental-features = ["nix-command" "flakes"];
 
+  nix.nixPath = [ "nixpkgs=${pkgs.path}" "nixos-config=/etc/nixos/configuration.nix" ];
+
   nixpkgs.config.allowUnfree = true;
 
   # -- Programs (system-managed) --
@@ -102,6 +101,13 @@ in {
           set signcolumn=yes
           set ignorecase
           set smartcase
+          set scrolloff=8
+          set cursorline
+          set splitright
+          set splitbelow
+          set confirm
+          set undofile
+          set clipboard=unnamedplus
 
           " indentation
           set expandtab
@@ -111,15 +117,170 @@ in {
 
           " ---- keymaps ----
           let mapleader = " "
-          nnoremap <leader>e :Ex<Cr>
 
           " ---- colors ----
           colorscheme habamax
 
           " ---- system LSP ----
           lua << EOF
+          require("telescope").setup({})
+          require("gitsigns").setup()
+
+          local builtin = require("telescope.builtin")
+
+          local py_checker = "mypy"
+
+          vim.keymap.set("n", "<leader>ff", builtin.find_files, {
+            desc = "Find Files",
+          })
+
+          vim.keymap.set("n", "<leader>fg", builtin.live_grep, {
+            desc = "Search project text",
+          })
+
+          vim.keymap.set("n", "<leader>fb", builtin.buffers, {
+            desc = "Find buffers",
+          })
+
+          vim.keymap.set("n", "<leader>fh", builtin.help_tags, {
+            desc = "Search help",
+          })
+
+          -- ---- oil setup ----
+          require("oil").setup({
+            -- Take over directory buffers ('nvim.', ':e src/') from netrw
+            default_file_explorer = true,
+            columns = { "icon" }, -- rendered by nvim-web-devicons
+            -- skip_confirm_for_simple_edits = true,
+            restore_win_options = true,
+            buf_options = {
+              buflisted = false,
+              bufhidden = "hide",
+            },
+            view_options = {
+              show_hidden = true,
+            },
+            float = {
+              padding = 2,
+              border = "rounded",
+              win_options = { winblend = 0 },
+            },
+            keymaps = {
+              -- extra exits on top of the default <C-c>
+              ["q"] = "actions.close",
+              ["<Esc>"] = "actions.close",
+              -- freed up for tmux/window nav; plain '~' and 'gs' still work
+              ["<C-h>" ] = false,
+              ["<C-l>"] = false,
+              ["<C-s>"] = { "actions.select", opts = { vertical = true } },
+              ["<C-v>"] = { "actions.select", opts = { horizontal = true } },
+            },
+          })
+
+          vim.keymap.set("n", "<leader>e", function()
+            require("oil").open()
+          end, { desc = "Oil: parent directory of file" })
+
+          vim.keymap.set("n", "<leader>E", function()
+            require("oil").toggle_float()
+          end, { desc = "Oil: floating explorer" })
+
+          -- ---- lua statusline ---- 
+          require("lualine").setup({
+            options = { theme = "auto", globalstatus = true },
+            sections = {
+              lualine_a = { "mode" },
+              lualine_b = { "branch", "diff", "diagnostics" },
+              lualine_c = { { "filename", path = 1 } },
+              lualine_x = { "lsp_status", "encoding", "fileformat", "filetype" },
+              lualine_y = { "progress" },
+              lualine_z = { "location" },
+            },
+            extensions = { "oil" },
+          })
+
+          local blink = require("blink.cmp")
+
+          blink.setup({
+            keymap = {
+              preset = "default",
+            },
+
+            completion = {
+              documentation = {
+                auto_show = true,
+              },
+            },
+
+            sources = {
+              default = { "lsp", "path", "snippets", "buffer" },
+            },
+
+            -- Keep this first pass independent of native matcher binaries.
+            fuzzy = {
+              implementation = "lua",
+            },
+          })
+
+          vim.lsp.config("*", {
+            capabilities = blink.get_lsp_capabilities(),
+          })
+
+          vim.lsp.config("nixd", {
+            cmd = { "${pkgs.nixd}/bin/nixd" },
+            settings = {
+              nixd = {
+                formatting = {
+                  command = { "${pkgs.alejandra}/bin/alejandra" },
+                },
+              },
+            },
+          })
+
           vim.lsp.enable({
-            "basedpyright", "nixd", "lua_ls", "ruff",
+            "nixd", "lua_ls", "ruff",
+          })
+
+          require("lint").linters_by_ft = { python = { py_checker } }
+
+          vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
+            group = vim.api.nvim_create_augroup("NixOS4oneLint", { clear = true }),
+            callback = function()
+              require("lint").try_lint()
+            end,
+          })
+
+          vim.api.nvim_create_autocmd("FileType", {
+            group = vim.api.nvim_create_augroup(
+              "NixOS4onePythonHighlight",
+              { clear = true }
+            ),
+            pattern = "python",
+            callback = function(event)
+              vim.treesitter.start(event.buf)
+            end,
+          })
+
+          vim.api.nvim_create_autocmd("FileType", {
+            group = vim.api.nvim_create_augroup(
+              "NixOS4oneNixTools",
+              { clear = true }
+            ),
+            pattern = "nix",
+            callback = function(event)
+              vim.treesitter.start(event.buf)
+              vim.keymap.set("n", "<leader>nf", function()
+                vim.lsp.buf.format({
+                  bufnr = event.buf,
+                  name = "nixd",
+                  async = false,
+                  timeout_ms = 5000,
+                })
+              end, {
+                buffer = event.buf,
+                desc = "Nix: format with Alejandra",
+              })
+            end,
           })
           EOF
         '';
@@ -133,6 +294,10 @@ in {
             oil-nvim
             lualine-nvim
             nvim-web-devicons
+            blink-cmp
+            friendly-snippets
+            gitsigns-nvim
+            nvim-lint
           ];
           opt = [];
         };
@@ -160,7 +325,10 @@ in {
   };
 
   # -- Services --
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+    extraSetFlags = ["--ssh"];
+  };
 
   services.postgresql = {
     enable = true;
@@ -199,6 +367,29 @@ in {
     nerd-fonts.roboto-mono
   ];
 
+  environment.sessionVariables = {
+    SOPS_CONFIG = "/home/brian/secrets/.sops.yaml";
+    CREDENTIALS_FILE = "/home/brian/secrets/credentials.yaml";
+  };
+
+  ## Due to AI, the requirement to not only stay updated, but
+  ## to trust enough where and how you update. Flakes make this
+  ## level of granularity simpler to organize, however, Nix
+  ## has some solutions to this worth exploring. It still 
+  ## requires a level of abstration, it's just a different 
+  ## perspective and approach.
+  # -- Local Git Host --
+  users.groups.git = { };
+users.users.git = {
+  isSystemUser = true;
+  group = "git";
+  home = "/srv/git";
+  createHome = true;
+  shell = "${pkgs.git}/bin/git-shell";
+  openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUbpYSJA/cmAtkoqkYbwHYgabTZu4aa4Inxjthuz0il brian@lati"
+  ];
+};
   # -- User --
   users.users.${vars.userName} = {
     isNormalUser = true;
@@ -219,6 +410,10 @@ in {
       brave
       librewolf
 
+      # Security Basics
+      age
+      sops
+            
       # Dev Tools
       zoxide
       uv
@@ -227,7 +422,7 @@ in {
 
       # Linters / LSP / Formatters
       ruff ## has python package in nixpkgs
-      basedpyright
+      #basedpyright
       mypy ## has python package in nixpkgs
       ty
       nixd
@@ -247,6 +442,9 @@ in {
       miller
       pandoc ## has python package in nixpkgs
       pup
+
+      # Neovim Help
+      tree-sitter
     ];
   };
 

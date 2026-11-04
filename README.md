@@ -30,6 +30,11 @@ The latest landed upgrade added a local bare git repo (see
 OFFLINE and only push to your git holder of choice when you want to. (New to
 me, so I'll be exploring some utilization options.)
 
+Config lineage — v0 is the exact config this project started with, the root
+config is whatever most recently shipped, and every archived version in
+between is accounted for — lives in
+[`docs/config-lineage.md`](docs/config-lineage.md).
+
 TODO for 11/3/26 – 11/6/26:
 
 1. Set up Headscale (it's a nixpkg!) and localize control of the Tailnet — see [`docs/headscale.md`](docs/headscale.md)
@@ -37,6 +42,9 @@ TODO for 11/3/26 – 11/6/26:
 3. Dedicated/declared container as a system service for hosting local LLMs
 4. Set PATHs for anything that gets referenced for configuration
 5. Unlock full hardware updates and utilize the Facter hardware profile in `configuration.nix` for more granular control (never done this, should be interesting)
+
+Parking lot (after this window): package `slowql` — 282+ rules, offline
+static SQL analyzer, currently just an aspiration comment in the config.
 
 ## What's Inside
 

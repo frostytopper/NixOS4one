@@ -46,6 +46,15 @@ esac
 
 Save it as `~/nix-config/cfg.sh`, then `chmod +x cfg.sh`.
 
+## Why `try` before `switch`
+
+`nixos-rebuild test` is one of the least talked about rebuild options: it
+makes your config *live* without making it a *generation*. You can test any
+new config without polluting your generation history — and if it
+misbehaves, a reboot puts you back on your last booted config.
+
+It's like using "nix run ...", except on your home system lol
+
 ## The workflow
 
 When an LLM proposes a config, paste it over `~/nix-config/configuration.nix` — no delete step, git is holding the old one:

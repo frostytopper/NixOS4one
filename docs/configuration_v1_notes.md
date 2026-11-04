@@ -1,16 +1,20 @@
 # configuration_v1.nix — Companion Notes
 
-**Status:** Working system configuration (single-file, no flake, no Home Manager).
+**Status:** Archived — superseded by the root `configuration.nix` (see
+[config-lineage.md](config-lineage.md)). Kept for history.
 
 ## What this file is
 
-`configuration_v1.nix` is the current live reference for the full NixOS system:
-desktop (KDE Plasma 6 + SDDM/Wayland), audio, services, user packages, and a
-system-managed Neovim via `programs.neovim.configure`.
+`configuration_v1.nix` was the first confirmed system-wide upgrade to the
+config this project started with (`configuration_v0.nix`): desktop (KDE
+Plasma 6 + SDDM/Wayland), audio, services, user packages, and a
+system-managed Neovim via `programs.neovim.configure`. Everything it added
+survives in the live root config.
 
-It is the successor to `neovim/upgrades/Phase1/configuration_NV_01_05.nix`, which was a
-Phase 1 snapshot focused on getting the Neovim toolchain stood up. Do not treat
-NV_01_05 as the current system config; it is kept for history.
+It is the successor to
+`docs/neovim/upgrades/Phase1/configuration_NV_01_05.nix`, which was a
+Phase 1 snapshot focused on getting the Neovim toolchain stood up. Do not
+treat NV_01_05 as the current system config; it is kept for history.
 
 ## Differences from `configuration_NV_01_05.nix`
 

@@ -1,8 +1,10 @@
 # Reading the Config, Top to Bottom
 
-`configuration.nix` is organized into labeled sections. Grep for these
-headers and read them in this order your first time through the original
-config. As it evolves it may change:
+[`configuration.nix`](../configuration.nix) at the repo root is organized
+into labeled sections — it is the live config (see
+[config-lineage.md](config-lineage.md) for how it relates to the archived
+v0/v1 versions). Grep for these headers and read them in this order your
+first time through. As the config evolves, this table may drift:
 
 | Section | Grep | What It Does |
 |---|---|---|

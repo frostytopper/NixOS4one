@@ -1,28 +1,3 @@
-## From the human behind this: Most current config is located here: 
-## https://github.com/frostytopper/NixOS4one/blob/main/docs/LocalGitHost/configuration_LGit_01_01.nix
-## This config includes the fantastic addition of a local bare git repo! 
-## This means you can keep track of every change OFFLINE and only push to your git holder of choice
-## when you want too. This is new to me, so I'll be exploring some utilization options.
-
-## TODO for 11/3/26 - 11/6/26
-## 1 - Setup Headscale(it's a nixpkg!) and localize control of my Tailnet
-## 2 - Setup a persistent TMUX instance that launches neovim on boot,
-## AND loads neovim on boot for the whole system... so first load has happened
-## before you ever touch the terminal and response is snappy
-## 3 - Dedicated/declared container as a system service for hosting local LLMs (They stole our data,
-## abliterated models give it back)
-## 4 - Set PATHs for anything that gets referenced for configuration
-## 5 - Unlock full hardware updates and utilize Facter hardware profile in 
-## configuration.nix for more granular control (never done this, should be interesting)
-
-##-## NixOS is a MONSTER of an OS. Turning your machine into YOUR machine is     ##-##
-##-## a beautiful thing. Unfortunately the Reproducability and Portability of    ##-##
-##-## Nixos took over the conversation, missing one of the most amazing uses     ##-##
-##-## which is wiring your system so that it takes much less effort              ##-##
-##-## to do MORE... The adventure continues!                                     ##-##
-
-#### Important Note: You, yes you, are a beautiful human! :-D                    ####
-
 # NixOS4One
 
 One user. One machine. One `configuration.nix`.
@@ -36,9 +11,28 @@ The audience is the solo dev: someone who wants a full workstation with real
 services (database, VPN mesh, persistent terminal sessions, LSP-backed
 editor) without maintaining a meta-framework on top of their OS.
 
-See `docs/` for an annotated walkthrough of the config, the reasoning behind
-each structural choice (`docs/decisions/`), and a staged upgrade path
-(`docs/upgrades/`).
+See `docs/` for an [annotated walkthrough of the config](docs/00-reading-the-config.md),
+the reasoning behind each structural choice ([`docs/decisions/`](docs/decisions/)),
+and a staged upgrade path ([`docs/upgrades/`](docs/upgrades/)).
+
+## Current State of Play
+
+Working notes from the human behind this repo — dated, and pruned as things
+ship.
+
+Most current config: [`docs/LocalGitHost/configuration_LGit_01_01.nix`](docs/LocalGitHost/configuration_LGit_01_01.nix).
+This config includes the fantastic addition of a local bare git repo (see
+[local git hosting](docs/local-git-hosting.md)) — keep track of every change
+OFFLINE and only push to your git holder of choice when you want to. (New to
+me, so I'll be exploring some utilization options.)
+
+TODO for 11/3/26 – 11/6/26:
+
+1. Set up Headscale (it's a nixpkg!) and localize control of the Tailnet — see [`docs/headscale.md`](docs/headscale.md)
+2. Persistent tmux instance that launches neovim on boot, for the whole system — first load has happened before you ever touch the terminal (see [`tmux/`](tmux/) and [`docs/neovim/`](docs/neovim/))
+3. Dedicated/declared container as a system service for hosting local LLMs
+4. Set PATHs for anything that gets referenced for configuration
+5. Unlock full hardware updates and utilize the Facter hardware profile in `configuration.nix` for more granular control (never done this, should be interesting)
 
 ## What's Inside
 
@@ -133,3 +127,17 @@ sudo nixos-rebuild switch
 
 You should be able to read your own OS configuration top to bottom and
 understand every line. NixOS makes that possible; this repo is the proof.
+
+## Related
+
+- [collaborative-workbench](https://github.com/frostytopper/collaborative-workbench) (private) — the workshop for the projects this machine runs: data pipelines, performance studies, and local-LLM experiments
+
+---
+
+> NixOS is a MONSTER of an OS. Turning your machine into YOUR machine is a
+> beautiful thing. Unfortunately the Reproducibility and Portability of
+> NixOS took over the conversation, missing one of the most amazing uses —
+> wiring your system so that it takes much less effort to do MORE... The
+> adventure continues!
+>
+> You, yes you, are a beautiful human! :-D

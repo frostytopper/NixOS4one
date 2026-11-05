@@ -144,6 +144,16 @@ understand every line. NixOS makes that possible; this repo is the proof.
 
 - [collaborative-workbench](https://github.com/frostytopper/collaborative-workbench) (private) — the workshop for the projects this machine runs: data pipelines, performance studies, and local-LLM experiments
 
+## License and Attribution
+
+This project is licensed under the terms of the MIT License — see
+[LICENSE.txt](LICENSE.txt).
+
+NixOS is a registered trademark of the NixOS Foundation. The NixOS logo is
+licensed under CC BY 4.0 by Tim Cuthbertson. NixOS4one is an independent,
+community-driven project and is not affiliated with, sponsored by, or
+endorsed by the NixOS Foundation.
+
 ---
 
 > NixOS is a MONSTER of an OS. Turning your machine into YOUR machine is a

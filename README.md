@@ -41,7 +41,7 @@ TODO for 11/3/26 – 11/6/26:
 2. Persistent tmux instance that launches neovim on boot, for the whole system — first load has happened before you ever touch the terminal (see [`tmux/`](tmux/) and [`docs/neovim/`](docs/neovim/))
 3. Dedicated/declared container as a system service for hosting local LLMs
 4. Set PATHs for anything that gets referenced for configuration
-5. Unlock full hardware updates and utilize the Facter hardware profile in `configuration.nix` for more granular control (never done this, should be interesting)
+5. Revert to the standard, machine-generated `hardware-configuration.nix`; enable `hardware.enableAllFirmware`, then verify what NixOS's built-in hardware functionality already provides before adding granular hardware tweaks. Keep the hardware configuration local and gitignored.
 
 Parking lot (after this window): package `slowql` — 282+ rules, offline
 static SQL analyzer, currently just an aspiration comment in the config.
@@ -89,10 +89,6 @@ devenv, packaging), not the system definition.
 This repo is deliberately hospitable to AI-assisted editing, because the
 current generation of models is unusually good at Nix:
 
-- Nix and the NixOS option surface are heavily represented in training data.
-  Most frontier models can correctly name `programs.*` and `services.*`
-  options, generate reasonable `environment.systemPackages` additions, and
-  explain what an existing block does.
 - A single-file config fits in context. You can paste the whole thing, or
   point the model at the repo, and get a full-file rewrite back instead of
   fragments you have to stitch.

@@ -3,6 +3,7 @@
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 {
   config,
+  lib,
   pkgs,
   ...
 }: let
@@ -11,6 +12,16 @@
     userName = "brian";
     fullName = "frozt"; # display name, indepenent of login name
     hostName = "lati";
+    timeZone = "America/Los_Angeles";
+  };
+
+  # Read configured account's home
+  user = config.users.users.${vars.userName};
+
+  paths = {
+    home = user.home;
+    secrets = "${user.home}/secrets";
+    userProfileBin = "/etc/profiles/per-user/${vars.userName}/bin";
   };
 in {
   imports = [
@@ -19,17 +30,18 @@ in {
   ];
 
   hardware.facter.reportPath = ./facter.json;
+  nix.optimise.automatic = true;
 
   # --  Boot --
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "lati"; # Define your hostname.
+  networking.hostName = vars.hostName;
   networking.networkmanager.enable = true;
 
   # -- Locale / Time --
-  time.timeZone = "America/Los_Angeles";
   i18n.defaultLocale = "en_US.UTF-8";
+  time.timeZone = vars.timeZone;
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
     LC_IDENTIFICATION = "en_US.UTF-8";
@@ -80,12 +92,18 @@ in {
   # -- Nix --
   nix.settings.experimental-features = ["nix-command" "flakes"];
 
-  nix.nixPath = [ "nixpkgs=${pkgs.path}" "nixos-config=/etc/nixos/configuration.nix" ];
+  nix.nixPath = [
+    "nixpkgs=${builtins.storePath pkgs.path}"
+    "nixos-config=/etc/nixos/configuration.nix"
+  ];
 
   nixpkgs.config.allowUnfree = true;
 
   # -- Programs (system-managed) --
   programs = {
+    nix-ld = {
+      enable = true;
+    };
     neovim = {
       enable = true;
       defaultEditor = true;
@@ -119,7 +137,7 @@ in {
           let mapleader = " "
 
           " ---- colors ----
-          colorscheme habamax
+          colorscheme tokyonight-night
 
           " ---- system LSP ----
           lua << EOF
@@ -127,8 +145,6 @@ in {
           require("gitsigns").setup()
 
           local builtin = require("telescope.builtin")
-
-          local py_checker = "mypy"
 
           vim.keymap.set("n", "<leader>ff", builtin.find_files, {
             desc = "Find Files",
@@ -185,7 +201,7 @@ in {
             require("oil").toggle_float()
           end, { desc = "Oil: floating explorer" })
 
-          -- ---- lua statusline ---- 
+          -- ---- lua statusline ----
           require("lualine").setup({
             options = { theme = "auto", globalstatus = true },
             sections = {
@@ -237,18 +253,79 @@ in {
             },
           })
 
-          vim.lsp.enable({
-            "nixd", "lua_ls", "ruff",
+          -- Python language intelligence and type checking.
+          vim.lsp.config("ty", {
+            cmd = { "${pkgs.ty}/bin/ty", "server" },
+            filetypes = { "python" },
+            root_markers = { "pyproject.toml", "ty.toml", ".git" },
           })
 
-          require("lint").linters_by_ft = { python = { py_checker } }
-
-          vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
-            group = vim.api.nvim_create_augroup("NixOS4oneLint", { clear = true }),
-            callback = function()
-              require("lint").try_lint()
+          -- Python linting, formatting, and code actions.
+          vim.lsp.config("ruff", {
+            cmd = { "${pkgs.ruff}/bin/ruff", "server" },
+            filetypes = { "python" },
+            root_markers = {
+              "pyproject.toml",
+              "ruff.toml",
+              ".ruff.toml",
+              ".git",
+            },
+            on_attach = function(client)
+             -- Let ty own hover information.
+             client.server_capabilities.hoverProvider = false
             end,
           })
+
+
+          vim.lsp.config("lua_ls", {
+            settings = {
+              Lua = {
+                runtime = {
+                  version = "LuaJIT",
+                },
+                diagnostics = {
+                  globals = { "vim" },
+                },
+                workspace = {
+                  checkThirdParty = false,
+                  library = { vim.env.VIMRUNTIME },
+                },
+                telemetry = {
+                  enable = false,
+                },
+              },
+            },
+          })
+
+          vim.lsp.enable({
+            "nixd",
+            "lua_ls",
+            "ruff",
+            "ty",
+          })
+
+          vim.keymap.set("n", "<leader>f", function()
+            local preferred = {
+              nix = "nixd",
+              python = "ruff",
+            }
+
+            local server = preferred[vim.bo.filetype]
+            if not server then
+              vim.notify("No formatter wired for this filetype")
+              return
+            end
+
+            vim.lsp.buf.format({
+              name = server,
+              async = false,
+              timeout_ms = 5000,
+            })
+          end, { desc = "Format buffer" })
+
+          vim.keymap.set("n", "<leader>d", function()
+            vim.diagnostic.open_float({ scope = "cursor" })
+          end, { desc = "Show diagnostic under curson" })
 
           vim.api.nvim_create_autocmd("FileType", {
             group = vim.api.nvim_create_augroup(
@@ -294,10 +371,12 @@ in {
             oil-nvim
             lualine-nvim
             nvim-web-devicons
+            vim-obsession
             blink-cmp
             friendly-snippets
             gitsigns-nvim
             nvim-lint
+            tokyonight-nvim
           ];
           opt = [];
         };
@@ -314,9 +393,37 @@ in {
       };
     };
 
-    fish.enable = true;
+    fish = {
+      enable = true;
 
-    tmux.enable = true;
+      interactiveShellInit = ''
+        ${pkgs.zoxide}/bin/zoxide init fish | source
+      '';
+    };
+
+    tmux = {
+      enable = true;
+
+      extraConfig = ''
+        # Neovim workspace resoration requires a saved Session.vim.
+        set -g @resurrect-strategy-nvim 'session'
+        set -g @resurrect-processes '"~nvim->nvim"'
+
+        # Automatic workspace snapshots and startup restoration.
+        set -g @continuum-save-interval '5'
+        set -g @continuum-restore 'on'
+
+        # NixOS owns boot startup, not the plugin.
+        set -g @continuum-boot 'off'
+
+        # Continuum's autosave uses the status line.
+        set -g status on
+
+        # Load these after other statusline/theme configuration.
+        run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
+        run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
+      '';
+    };
 
     direnv = {
       enable = true;
@@ -345,19 +452,39 @@ in {
 
   # -- Persistent TMUX Session --
   systemd.services.tmux-main = {
-    description = "Persistent tmux session";
-    after = ["network.target"];
+    description = "Persistent NeoVim tmux session";
     wantedBy = ["multi-user.target"];
 
+    after = ["user-runtime-dir@1000.service"];
+    requires = ["user-runtime-dir@1000.service"];
+
+    environment = {
+      HOME = paths.home;
+
+      # Preserve access to wrappers, user packages, and system packages.
+      PATH = lib.mkForce "/run/wrappers/bin:${paths.userProfileBin}:/run/current-system/sw/bin";
+      TMUX_TMPDIR = "/run/user/1000";
+    };
+
     serviceConfig = {
-      Type = "forking";
+      Type = "oneshot";
+      RemainAfterExit = true;
       User = vars.userName;
       Group = "users";
-      ExecStart = "${pkgs.tmux}/bin/tmux new-session -d -s main";
-      ExecStop = "${pkgs.tmux}/bin/tmux kill-session -t main";
-      Restart = "on-failure";
-      #RemainAfterExit = true;
+      WorkingDirectory = paths.home;
     };
+
+    script = ''
+      if ! ${pkgs.tmux}/bin/tmux has-session -t '=editor' 2>/dev/null; then
+        ${pkgs.tmux}/bin/tmux new-session -d -s editor -n neovim \
+          'exec /run/current-system/sw/bin/nvim' \
+          || ${pkgs.tmux}/bin/tmux has-session -t '=editor'
+      fi
+    '';
+
+    preStop = ''
+      ${pkgs.tmux}/bin/tmux kill-session -t '=editor' 2>/dev/null || true
+    '';
   };
 
   # -- Fonts --
@@ -368,34 +495,35 @@ in {
   ];
 
   environment.sessionVariables = {
-    SOPS_CONFIG = "/home/brian/secrets/.sops.yaml";
-    CREDENTIALS_FILE = "/home/brian/secrets/credentials.yaml";
+    SOPS_CONFIG = "${paths.secrets}/.sops.yaml";
+    CREDENTIALS_FILE = "${paths.secrets}/credentials.yaml";
   };
 
   ## Due to AI, the requirement to not only stay updated, but
   ## to trust enough where and how you update. Flakes make this
   ## level of granularity simpler to organize, however, Nix
-  ## has some solutions to this worth exploring. It still 
-  ## requires a level of abstration, it's just a different 
+  ## has some solutions to this worth exploring. It still
+  ## requires a level of abstration, it's just a different
   ## perspective and approach.
   # -- Local Git Host --
-  users.groups.git = { };
-users.users.git = {
-  isSystemUser = true;
-  group = "git";
-  home = "/srv/git";
-  createHome = true;
-  shell = "${pkgs.git}/bin/git-shell";
-  openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUbpYSJA/cmAtkoqkYbwHYgabTZu4aa4Inxjthuz0il brian@lati"
-  ];
-};
+  users.groups.git = {};
+  users.users.git = {
+    isSystemUser = true;
+    group = "git";
+    home = "/srv/git";
+    createHome = true;
+    shell = "${pkgs.git}/bin/git-shell";
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJUbpYSJA/cmAtkoqkYbwHYgabTZu4aa4Inxjthuz0il brian@lati"
+    ];
+  };
   # -- User --
   users.users.${vars.userName} = {
     isNormalUser = true;
     description = vars.fullName;
     shell = pkgs.fish;
     extraGroups = ["networkmanager" "wheel"];
+    linger = true;
     packages = with pkgs; [
       # Terminal
       kdePackages.kate
@@ -413,7 +541,7 @@ users.users.git = {
       # Security Basics
       age
       sops
-            
+
       # Dev Tools
       zoxide
       uv
@@ -526,3 +654,4 @@ users.users.git = {
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "26.05"; # Did you read the comment?
 }
+

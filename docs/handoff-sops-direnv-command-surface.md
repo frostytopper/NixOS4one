@@ -85,3 +85,60 @@ Keep doc-first, script-second (do NOT promote to casual shell surface):
   run completes, and wrap future long jobs in tmux from the start
   (persistent `editor` session exists via the tmux-main service; a
   dedicated session is fine too).
+
+## Next-tier improvements (2026-11-08)
+
+Additions identified later the same day, beyond the sections above.
+Modularization options (splitting configuration.nix, custom module
+options) were deliberately omitted. Everything here fits the no-flakes,
+no-Home-Manager constraint.
+
+### Tier 0 — Actual gaps (one-line fixes)
+
+The system has no garbage collection configured: `nix.optimise.automatic`
+dedupes but nothing deletes, so the store grows on every rebuild.
+
+- `nix.gc.automatic = true` with `--delete-older-than 30d` — the missing
+  half of store hygiene.
+- `boot.loader.systemd-boot.configurationLimit = 10` — without this, /boot
+  eventually fills with generations (classic failure on laptop EFI
+  partitions).
+- `services.journald` size cap (~500M) — long-running downloads log a lot.
+- `zramSwap.enable = true` — one line, noticeably better behavior under
+  heavy parse/download load on the 7420.
+
+### Tier 1 — One-option quality of life
+
+- `programs.fish.plugins` — declarative fish plugins from nixpkgs.
+  Standout: fishPlugins.done notifies when a long command finishes (start
+  a rebuild or multi-hour crawl, walk away, get pinged). sponge (failed
+  commands stay out of history) is a quiet second.
+- `programs.mosh.enable = true` — roams across network changes; Pixel →
+  lati survives wifi → LTE handoffs. Direct upgrade to the mobile
+  workflow.
+- tmux `set-clipboard on` — OSC52 passthrough so yanking inside
+  SSH-attached neovim reaches the Pixel clipboard. One line in
+  extraConfig; connects to docs/01-ssh-wayland-clipboard.md.
+- `programs.fzf` with fish keybindings — Telescope exists inside nvim but
+  nothing equivalent in the shell; Ctrl-R fuzzy history pairs with zoxide.
+- SSH hardening: `services.openssh` PasswordAuthentication = false — key
+  auth is already the only path used.
+- `systemd-run --user` as a habit for long jobs — transient user units
+  survive terminal close and log to the journal (direct answer to the
+  no-tmux incident in Live operational state). Candidate fish function,
+  same batch as the sops layer.
+
+### Tier 2 — Structural Nix
+
+- Declare the directory skeleton, not the contents: `systemd.tmpfiles.rules`
+  (or an activationScript) guarantees ~/secrets (0700, owned by brian),
+  ~/Projects, and /srv/git permissions after every switch. Purest
+  expression of the repo philosophy: declarative where things live,
+  imperative what they contain.
+
+### Suggested order
+
+Tier 0 in one rebuild — corrections, not preferences. Then the fish
+plugins + the systemd-run habit (chains directly off today). The tmpfiles
+skeleton pairs with implementing section 1 above (touching the same
+config areas).

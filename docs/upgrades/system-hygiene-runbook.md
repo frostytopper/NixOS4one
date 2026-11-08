@@ -16,56 +16,33 @@ GC is destructive: the age is a generation-retention rule, not a promise to reta
 
 Keep this output local; do not paste secret contents or machine inventory into GitHub. Do not copy hardware-configuration.nix or facter.json into the public repository.
 
+If your login shell is fish, enter Bash first:
+
 ```bash
 bash
 ```
 
+Save and run the following Bash script on lati. It continues after command failures and displays output and errors while also writing them to a timestamped text file in `~/baselinelog/`. Keep the report local; do not upload machine inventory or secret contents to GitHub.
+
 ```bash
+#!/usr/bin/env bash
+set +e
 umask 077
-```
+mkdir -p "$HOME/baselinelog"
 
-```bash
-mkdir -p "$HOME/.local/state/nixos-hygiene"
-```
-
-```bash
-date -Is
-```
-
-```bash
-nixos-version
-```
-
-```bash
-readlink -f /run/current-system
-```
-
-```bash
-df -h / /boot /nix
-```
-
-```bash
-free -h
-```
-
-```bash
-swapon --show
-```
-
-```bash
-journalctl --disk-usage
-```
-
-```bash
-systemctl --failed
-```
-
-```bash
-sudo nix-env --profile /nix/var/nix/profiles/system --list-generations
-```
-
-```bash
-systemctl list-timers --all 'nix-*'
+{
+  mkdir -p "$HOME/.local/state/nixos-hygiene"
+  date -Is
+  nixos-version
+  readlink -f /run/current-system
+  df -h / /boot /nix
+  free -h
+  swapon --show
+  journalctl --disk-usage
+  systemctl --failed
+  sudo nix-env --profile /nix/var/nix/profiles/system --list-generations
+  systemctl list-timers --all 'nix-*'
+} 2>&1 | tee "$HOME/baselinelog/baseline-$(date +%Y%m%d-%H%M%S).txt"
 ```
 
 The committed file already enables automatic store optimisation and configuration copying. Preserve both. Do not change system.stateVersion, update channels, or use --upgrade during this maintenance pass. The repository is not a complete deployable machine configuration: its hardware imports remain local.
@@ -170,47 +147,22 @@ This activates services and the GC timer. A due persistent timer can run after a
 
 ## 5. Verify
 
+Save and run this Bash script on lati. It continues after command failures and displays output on screen without writing a log.
+
 ```bash
+#!/usr/bin/env bash
+set +e
+
 systemctl --failed
-```
-
-```bash
 systemctl status nix-gc.timer --no-pager
-```
-
-```bash
 systemctl list-timers --all nix-gc.timer
-```
-
-```bash
 systemctl cat nix-gc.service
-```
-
-```bash
 journalctl -u systemd-journald -b -n 30 --no-pager
-```
-
-```bash
 journalctl --disk-usage
-```
-
-```bash
 zramctl
-```
-
-```bash
 swapon --show
-```
-
-```bash
 free -h
-```
-
-```bash
 bootctl list
-```
-
-```bash
 df -h / /boot /nix
 ```
 

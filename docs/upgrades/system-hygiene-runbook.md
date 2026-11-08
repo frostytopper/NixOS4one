@@ -2,7 +2,7 @@
 
 Baseline: commit `818a561e21d657f43f7c06c3febc1ded29aa6fdb`, especially `configuration.nix` and `docs/handoff-approved-implementation-order.md`.
 
-Status: instructions only; no system changes have been executed. Run commands on lati, not on the work computer. GitHub is the reading surface. Shell blocks below use Bash: enter `bash` first if your login shell is fish.
+Status: instructions only; no system changes have been executed. Run commands on lati, not on the work computer. GitHub is the reading surface. Individual commands have separate blocks. Multi-line terminal blocks are simple Bash scripts using `#!/usr/bin/env bash`; save and run them with Bash rather than pasting them into fish. For individual Bash commands, enter `bash` first if your login shell is fish.
 
 ## Scope and proposed decisions
 
@@ -18,17 +18,53 @@ Keep this output local; do not paste secret contents or machine inventory into G
 
 ```bash
 bash
+```
+
+```bash
 umask 077
+```
+
+```bash
 mkdir -p "$HOME/.local/state/nixos-hygiene"
+```
+
+```bash
 date -Is
+```
+
+```bash
 nixos-version
+```
+
+```bash
 readlink -f /run/current-system
+```
+
+```bash
 df -h / /boot /nix
+```
+
+```bash
 free -h
+```
+
+```bash
 swapon --show
+```
+
+```bash
 journalctl --disk-usage
+```
+
+```bash
 systemctl --failed
+```
+
+```bash
 sudo nix-env --profile /nix/var/nix/profiles/system --list-generations
+```
+
+```bash
 systemctl list-timers --all 'nix-*'
 ```
 
@@ -40,8 +76,17 @@ Do not run a wildcard delete. Close or identify active editors before deciding a
 
 ```bash
 ls -ld "$HOME/secrets"
+```
+
+```bash
 find "$HOME/secrets" -maxdepth 1 -type f \( -name '*.sw?' -o -name '*~' -o -name '*.bak' -o -name '*.orig' \) -printf '%M %u %s %f\n'
+```
+
+```bash
 pgrep -a nvim || true
+```
+
+```bash
 lsof +D "$HOME/secrets"
 ```
 
@@ -49,9 +94,10 @@ The filename patterns are a candidate inventory, not a complete leak detector. N
 
 For an abandoned swap needing recovery, use `nvim -r /absolute/path/to/original-file` locally. Recovery can display plaintext credentials; avoid shared screens, recordings, and copied terminal output. Preserve needed edits in an appropriate encrypted destination before removing the swap.
 
-For each individually reviewed disposable artifact, run this command and enter its exact absolute pathname:
+For each individually reviewed disposable artifact, run this simple Bash script and enter its exact absolute pathname:
 
 ```bash
+#!/usr/bin/env bash
 read -r -p 'Exact abandoned artifact path: ' artifact
 ls -l -- "$artifact"
 rm -i -- "$artifact"
@@ -66,8 +112,15 @@ Make a private local backup; do not overwrite /etc/nixos from the public example
 
 ```bash
 sudo install -d -m 0700 /root/nixos-hygiene-backups
+```
+
+```bash
+#!/usr/bin/env bash
 sudo install -m 0600 /etc/nixos/configuration.nix \
   "/root/nixos-hygiene-backups/configuration.nix.$(date +%Y%m%d-%H%M%S)"
+```
+
+```bash
 sudoedit /etc/nixos/configuration.nix
 ```
 
@@ -119,15 +172,45 @@ This activates services and the GC timer. A due persistent timer can run after a
 
 ```bash
 systemctl --failed
+```
+
+```bash
 systemctl status nix-gc.timer --no-pager
+```
+
+```bash
 systemctl list-timers --all nix-gc.timer
+```
+
+```bash
 systemctl cat nix-gc.service
+```
+
+```bash
 journalctl -u systemd-journald -b -n 30 --no-pager
+```
+
+```bash
 journalctl --disk-usage
+```
+
+```bash
 zramctl
+```
+
+```bash
 swapon --show
+```
+
+```bash
 free -h
+```
+
+```bash
 bootctl list
+```
+
+```bash
 df -h / /boot /nix
 ```
 

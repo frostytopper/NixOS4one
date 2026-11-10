@@ -1,11 +1,11 @@
 # Handoff — approved implementation order
 
 Status: **Approved** — implementation order and decision inventory recorded.
-Implementation has not been performed.
+Secrets cleanup and Tier 0 maintenance are complete on lati; remaining work is pending.
 
 Scope: NixOS4one system, mobile workflow, shared development foundation,
 module extraction, Neovim language wiring, and environment-retention planning.
-This document records sequencing and decisions only; it is not an
+This document records sequencing, decisions, and completion status; it is not an
 implementation guide or configuration change.
 
 The PMC downloader is explicitly excluded from the blocking sequence. It can
@@ -34,12 +34,14 @@ handoff:
 
 ## 1. Immediate system hygiene
 
-1. Clean up leftover Neovim swap or backup files in `~/secrets`.  
-   Decide whether any file needs inspection or preservation before removal.
+1. ~~Clean up leftover Neovim swap or backup files in `~/secrets`.~~  
+   ~~Decide whether any file needs inspection or preservation before removal.~~  
+   Complete: inspected; no leftover swap or backup files found.
 
-2. Apply Tier 0 maintenance in one rebuild.  
-   Decide final garbage-collection age, boot-generation limit, journal size
-   cap, and zram enablement before implementation.
+2. ~~Apply Tier 0 maintenance in one rebuild.~~  
+   ~~Decide final garbage-collection age, boot-generation limit, journal size cap, and zram enablement before implementation.~~  
+   Complete on lati: weekly GC with 7-day retention, 5 boot generations,
+   `SystemMaxUse=500M`, and zram enabled. Switched and reverified by Brian.
 
 3. Apply mobile quality-of-life improvements separately: fish notifications,
    fzf, tmux clipboard passthrough, and mosh.  
@@ -130,7 +132,7 @@ handoff:
 
 ## First implementation session
 
-The first concrete session can cover the secrets cleanup and Tier 0
-maintenance, with mobile quality-of-life changes staged separately. Package
-locations, helper packaging, and Python-shell parameterization should be
-settled together before any helper implementation begins.
+Secrets cleanup and Tier 0 maintenance are complete on lati. Mobile
+quality-of-life changes remain staged separately and are next in order.
+Package locations, helper packaging, and Python-shell parameterization should
+be settled together before any helper implementation begins.

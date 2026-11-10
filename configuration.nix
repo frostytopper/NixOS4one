@@ -18,9 +18,13 @@
   # Read configured account's home
   user = config.users.users.${vars.userName};
 
-  paths = {
+  # rec lets paths reference sibling attributes, e.g. credentials uses secrets
+  paths = rec {
     home = user.home;
     secrets = "${user.home}/secrets";
+    sopsConfig = "${secrets}/.sops.yaml";
+    credentials = "${secrets}/credentials.yaml";
+    shellLibrary = "${home}/.local/lib/nix/shells";
     userProfileBin = "/etc/profiles/per-user/${vars.userName}/bin";
   };
 in {
@@ -32,12 +36,46 @@ in {
   hardware.facter.reportPath = ./facter.json;
   nix.optimise.automatic = true;
 
+# -- Tier 0 Maintenance --
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
+
+  boot.loader.systemd-boot.configurationLimit = 5;
+  
+  services.journald.extraConfig = ''
+    SystemMaxUse=500M
+  '';
+
+  zramSwap.enable = true;
+
   # --  Boot --
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+
   networking.hostName = vars.hostName;
   networking.networkmanager.enable = true;
+  networking.networkmanager.dispatcherScripts = [
+    {
+      type = "basic";
+      source = pkgs.writeShellScript "tailscale-udp-offload" ''
+        if [ "$1" = "wlp0s20f3" ] && [ "$2" = "up" ]; then
+          ${pkgs.ethtool}/bin/ethtool -K "$1" \
+            rx-udp-gro-forwarding on \
+            rx-gro-list off
+        fi
+      '';
+    }
+  ];
+  networking.firewall.interfaces.tailscale0.allowedUDPPortRanges = [
+    {
+      from = 60000;
+      to = 61000;
+    }
+  ];
 
   # -- Locale / Time --
   i18n.defaultLocale = "en_US.UTF-8";
@@ -398,6 +436,12 @@ in {
 
       interactiveShellInit = ''
         ${pkgs.zoxide}/bin/zoxide init fish | source
+        ${pkgs.fzf}/bin/fzf --fish | source
+
+        # Work around done's focus detection on KDE Wayland.
+        function __done_is_process_window_focused
+          return 1
+        end
       '';
     };
 
@@ -405,6 +449,12 @@ in {
       enable = true;
 
       extraConfig = ''
+        # Allow clipboard writes from applications inside tmux.
+        set -s set-clipboard on
+
+        # Allow applications to use tmux-wrapped terminal sequences.
+        set -g allow-passthrough on
+
         # Neovim workspace resoration requires a saved Session.vim.
         set -g @resurrect-strategy-nvim 'session'
         set -g @resurrect-processes '"~nvim->nvim"'
@@ -423,6 +473,11 @@ in {
         run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
         run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
       '';
+    };
+
+    mosh = {
+      enable = true;
+      openFirewall = false;
     };
 
     direnv = {
@@ -495,9 +550,14 @@ in {
   ];
 
   environment.sessionVariables = {
-    SOPS_CONFIG = "${paths.secrets}/.sops.yaml";
-    CREDENTIALS_FILE = "${paths.secrets}/credentials.yaml";
+    SOPS_CONFIG = paths.sopsConfig;
+    CREDENTIALS_FILE = paths.credentials;
   };
+
+  # Declare locations and permissions, not their contents.
+  systemd.tmpfiles.rules = [
+    "d ${paths.secrets} 0700 ${vars.userName} ${user.group} -"
+    ];
 
   ## Due to AI, the requirement to not only stay updated, but
   ## to trust enough where and how you update. Flakes make this
@@ -600,8 +660,10 @@ in {
     jq
     yq
     xq
+    fzf
     eza
     bat
+    fishPlugins.done
 
     # Network
     rustscan
@@ -610,6 +672,29 @@ in {
     zip
     unzip
     busybox
+
+    # TMUX Tailscale HTTP
+    (pkgs.writeShellScriptBin "file-server" ''
+  set -eu
+
+  tmux=${pkgs.tmux}/bin/tmux
+
+  # Create only when absent; keep sudo interactive inside the pane.
+  if ! "$tmux" has-session -t '=file-server' 2>/dev/null; then
+    "$tmux" new-session -d \
+      -s file-server \
+      -n http \
+      -c ${lib.escapeShellArg paths.home} \
+      '${pkgs.bash}/bin/bash -c "/run/wrappers/bin/sudo ${pkgs.tailscale}/bin/tailscale serve --http=8080 ${lib.escapeShellArg paths.home}; exec ${pkgs.fish}/bin/fish"'
+  fi
+
+  # Switch when already in tmux; otherwise attach normally.
+  if [ -n "''${TMUX:-}" ]; then
+    exec "$tmux" switch-client -t '=file-server'
+  else
+    exec "$tmux" attach-session -t '=file-server'
+  fi
+'')
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -626,7 +711,6 @@ in {
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 

@@ -3,6 +3,11 @@
 Analysis session output, 2026-11-08. No code was written; this doc is the
 agreed design for the next implementation session. Scope: NixOS4one only.
 
+Update, 2026-11-10: the analysis above describes the original session.
+Tier 1 mobile quality-of-life implementation is now complete; see the
+completion record below. The approved implementation-order handoff
+supersedes the original sequencing and helper-design details where noted.
+
 ## Current state (verified against repo + session history)
 
 - `paths.secrets = "${user.home}/secrets"` in the configuration.nix let block
@@ -109,24 +114,31 @@ dedupes but nothing deletes, so the store grows on every rebuild.
 
 ### Tier 1 — One-option quality of life
 
-- `programs.fish.plugins` — declarative fish plugins from nixpkgs.
-  Standout: fishPlugins.done notifies when a long command finishes (start
-  a rebuild or multi-hour crawl, walk away, get pinged). sponge (failed
-  commands stay out of history) is a quiet second.
-- `programs.mosh.enable = true` — roams across network changes; Pixel →
-  lati survives wifi → LTE handoffs. Direct upgrade to the mobile
-  workflow.
-- tmux `set-clipboard on` — OSC52 passthrough so yanking inside
-  SSH-attached neovim reaches the Pixel clipboard. One line in
-  extraConfig; connects to docs/01-ssh-wayland-clipboard.md.
-- `programs.fzf` with fish keybindings — Telescope exists inside nvim but
-  nothing equivalent in the shell; Ctrl-R fuzzy history pairs with zoxide.
+Status, 2026-11-10: mobile quality-of-life pass complete. Struck-through
+items record delivered scope; SSH hardening and managed jobs remain
+explicitly deferred, not falsely marked complete. The completion record
+below supersedes the original implementation suggestions.
+
+- ~~`programs.fish.plugins` — declarative fish plugins from nixpkgs.~~
+  ~~Standout: fishPlugins.done notifies when a long command finishes (start a rebuild or multi-hour crawl, walk away, get pinged). sponge (failed commands stay out of history) is a quiet second.~~
+  Delivered via `fishPlugins.done` in `environment.systemPackages`, not
+  `programs.fish.plugins`. sponge was optional and was not installed.
+- ~~`programs.mosh.enable = true` — roams across network changes; Pixel → lati survives wifi → LTE handoffs. Direct upgrade to the mobile workflow.~~
+  Installed; connection to the editor session verified. Network roaming
+  was not tested and is not a completion requirement for this pass.
+- ~~tmux `set-clipboard on` — OSC52 passthrough so yanking inside SSH-attached neovim reaches the Pixel clipboard. One line in extraConfig; connects to docs/01-ssh-wayland-clipboard.md.~~
+  Delivered clipboard and passthrough settings; terminal OSC 52 clipboard
+  test passed. No separate Neovim-to-Pixel clipboard test is claimed.
+- ~~`programs.fzf` with fish keybindings — Telescope exists inside nvim but nothing equivalent in the shell; Ctrl-R fuzzy history pairs with zoxide.~~
+  Delivered using the `fzf` package and its native `fzf --fish` integration.
 - SSH hardening: `services.openssh` PasswordAuthentication = false — key
   auth is already the only path used.
+  Deferred; no OpenSSH authentication change or new login test performed.
 - `systemd-run --user` as a habit for long jobs — transient user units
   survive terminal close and log to the journal (direct answer to the
   no-tmux incident in Live operational state). Candidate fish function,
   same batch as the sops layer.
+  Deferred to shared development foundation / managed jobs.
 
 ### Tier 2 — Structural Nix
 
@@ -142,3 +154,72 @@ Tier 0 in one rebuild — corrections, not preferences. Then the fish
 plugins + the systemd-run habit (chains directly off today). The tmpfiles
 skeleton pairs with implementing section 1 above (touching the same
 config areas).
+
+## Tier 1 completion record — 2026-11-10
+
+Status: Complete on lati, as applied and verified by Brian. This record
+uses the final working configuration supplied in the session; it does not
+claim that every suggestion in the original Tier 1 list was implemented.
+
+### Applied changes
+
+1. fzf: added `fzf` to `environment.systemPackages` and initialized native
+   fish bindings using `${pkgs.fzf}/bin/fzf --fish | source`. Existing
+   zoxide initialization was retained. Brian confirmed working functionality.
+
+2. Fish notifications: added `fishPlugins.done` to system packages.
+   Version 1.21.1 loaded and its handler was enabled, but notifications
+   were suppressed until focus detection was bypassed. The working
+   `interactiveShellInit` overrides `__done_is_process_window_focused`
+   with a function returning 1. Brian confirmed notifications and then
+   confirmed the persisted configuration. This private-function workaround
+   can notify even while the terminal is focused and may need revisiting
+   after plugin updates. No phone-push notification behavior is claimed.
+
+3. tmux clipboard: added `set -s set-clipboard on` and
+   `set -g allow-passthrough on` to the existing `extraConfig`, preserving
+   resurrect/continuum and the persistent editor service. Reloaded the
+   running configuration. Brian pasted `tmux clipboard test`, confirming
+   the OSC 52 terminal clipboard path. Applications in the session can
+   write the receiving terminal's clipboard when permitted by that terminal.
+
+4. Mosh: enabled `programs.mosh` with `openFirewall = false`; declared
+   UDP 60000–61000 on `networking.firewall.interfaces.tailscale0` rather
+   than adding that range globally. Brian connected over Tailscale and
+   reached the existing editor session. No network-interruption or
+   Wi-Fi/LTE roaming test was performed; Brian explicitly excluded it.
+
+5. Tailscale-related offload tuning: added a Nix-managed NetworkManager
+   basic dispatcher script using `pkgs.writeShellScript`. On an `up`
+   event for `wlp0s20f3`, it applies `rx-udp-gro-forwarding on` and
+   `rx-gro-list off` through `${pkgs.ethtool}/bin/ethtool`. The settings
+   were applied to the live interface and Brian confirmed switch and
+   verification. Installing the hook alone does not trigger an up event.
+   This is explicit adapter policy, not a Facter-generated setting.
+
+### Configuration and runtime-state boundary
+
+The supplied configuration also retains completed Tier 0 maintenance:
+weekly GC with 7-day retention, 5 boot generations, a 500M journal cap,
+and zram. No Home Manager or system-flake configuration was introduced.
+
+The final attachment still declares only `enable = true` and
+`extraSetFlags = ["--ssh"]` in `services.tailscale`. During the session,
+Brian ran `tailscale up --ssh --advertise-exit-node --operator=brian`
+and reported SSH and exit-node indicators in the Tailscale admin UI.
+Those runtime preferences must not be confused with complete declarative
+exit-node configuration: the attachment does not contain
+`useRoutingFeatures = "server"`, the exit-node flag, or the operator flag.
+No end-to-end exit-node routing verification is claimed. Preserve the
+working attachment as supplied rather than silently adding those settings.
+
+### Deferred and next
+
+- SSH hardening remains deferred. No additional OpenSSH session is required
+  to close this pass.
+- Managed jobs / `systemd-run --user` belong to the shared development
+  foundation track and were not implemented here.
+- sponge was an optional suggestion, not delivered scope.
+- Next: settle package/file locations, independently buildable helper
+  packaging, and Python/uv shell parameterization together, following
+  [the approved implementation order](handoff-approved-implementation-order.md).

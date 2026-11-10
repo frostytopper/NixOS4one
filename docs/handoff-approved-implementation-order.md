@@ -1,7 +1,7 @@
 # Handoff — approved implementation order
 
 Status: **Approved** — implementation order and decision inventory recorded.
-Secrets cleanup and Tier 0 maintenance are complete on lati; remaining work is pending.
+Secrets cleanup, Tier 0 maintenance, and Tier 1 mobile quality-of-life work are complete on lati. SSH hardening is deferred; shared development foundation work is next.
 
 Scope: NixOS4one system, mobile workflow, shared development foundation,
 module extraction, Neovim language wiring, and environment-retention planning.
@@ -13,7 +13,7 @@ be resumed or addressed at home and should not delay the work below.
 
 ## References
 
-- [SOPS/direnv command surface](handoff-sops-direnv-command-surface.md)
+- [SOPS/direnv command surface and Tier 1 completion record](handoff-sops-direnv-command-surface.md)
 - [Module extraction candidates](handoff-module-extraction-candidates.md)
 - [Python development workbench](handoff-python-development-workbench.md)
 - [Development-environment retention](handoff-development-environment-retention.md)
@@ -43,13 +43,18 @@ handoff:
    Complete on lati: weekly GC with 7-day retention, 5 boot generations,
    `SystemMaxUse=500M`, and zram enabled. Switched and reverified by Brian.
 
-3. Apply mobile quality-of-life improvements separately: fish notifications,
-   fzf, tmux clipboard passthrough, and mosh.  
-   Decide the exact fish plugin set, fzf keybinding scope, and any required
-   mosh firewall or port handling.
+3. ~~Apply mobile quality-of-life improvements separately: fish notifications, fzf, tmux clipboard passthrough, and mosh.~~  
+   ~~Decide the exact fish plugin set, fzf keybinding scope, and any required mosh firewall or port handling.~~  
+   Complete on lati, 2026-11-10: native fzf fish integration; packaged done
+   notifications with the KDE Wayland focus workaround; tmux clipboard and
+   passthrough settings; mosh with UDP 60000–61000 allowed on tailscale0.
+   NetworkManager UDP offload tuning was also applied and verified.
+   See the Tier 1 completion record in the SOPS/direnv handoff.
 
 4. Harden SSH after testing a fresh key-only session.  
-   Decide rollout timing and the rollback path in case remote access fails.
+   Decide rollout timing and the rollback path in case remote access fails.  
+   Deferred by Brian for this pass; no additional OpenSSH session or
+   network-stability test is required to close Tier 1.
 
 ## 2. Shared development foundation
 
@@ -130,9 +135,9 @@ handoff:
    project-specific pinning, update ownership, testing, rollback, and
    storage location.
 
-## First implementation session
+## Next implementation session
 
-Secrets cleanup and Tier 0 maintenance are complete on lati. Mobile
-quality-of-life changes remain staged separately and are next in order.
+Secrets cleanup, Tier 0 maintenance, and Tier 1 mobile quality-of-life work
+are complete on lati. SSH hardening remains deferred.
 Package locations, helper packaging, and Python-shell parameterization should
 be settled together before any helper implementation begins.

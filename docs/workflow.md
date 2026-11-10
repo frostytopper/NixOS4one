@@ -10,41 +10,7 @@ git commit -m "initial copy of live config"
 
 ## One script, four commands
 
-```bash
-#!/usr/bin/env bash
-# ~/nix-config/cfg.sh
-set -euo pipefail
-REPO="$HOME/nix-config"
-CFG="$REPO/configuration.nix"
-
-case "${1:-}" in
-  pull)
-    # /etc/nixos -> repo: snapshot the live config into history
-    cp /etc/nixos/configuration.nix "$REPO"
-    if git -C "$REPO" diff --quiet -- configuration.nix; then
-      echo "no changes"
-    else
-      git -C "$REPO" add configuration.nix
-      git -C "$REPO" commit -m "sync from /etc/nixos $(date -Is)"
-    fi
-    ;;
-  try)
-    # test-rebuild against the repo copy; /etc/nixos untouched
-    sudo nixos-rebuild test -I nixos-config="$CFG"
-    ;;
-  switch)
-    # make it live, sync fallback copy, commit the known-good version
-    sudo nixos-rebuild switch -I nixos-config="$CFG"
-    sudo cp "$CFG" /etc/nixos/configuration.nix
-    git -C "$REPO" add configuration.nix
-    git -C "$REPO" commit -m "switch: $(date -Is)"
-    ;;
-  *)
-    echo "usage: cfg.sh {pull|try|switch}"; exit 1 ;;
-esac
-```
-
-Save it as `~/nix-config/cfg.sh`, then `chmod +x cfg.sh`.
+`cfg.sh` lives in the repository root. Install it as `~/nix-config/cfg.sh`, then `chmod +x cfg.sh`.
 
 ## Why `try` before `switch`
 
@@ -68,3 +34,14 @@ git checkout -- configuration.nix   # bad: one command back to known-good
 ```
 
 And after any rebuild you did the traditional way (`sudo nixos-rebuild switch` from `/etc/nixos`), run `./cfg.sh pull` to snapshot the live config into the repo's history.
+
+## Quick live edits with `sudoedit`
+
+For small edits directly against `/etc/nixos`, `env SUDO_EDITOR=nvim sudoedit /etc/nixos/configuration.nix` is a legitimate shortcut. Know its behavior:
+
+- sudoedit copies the file to `/var/tmp/...` and opens the copy as *you*, with your environment. This is why your shell, aliases, and editor config all work.
+- The `/var/tmp` path in nvim's save prompt is normal. Answering **Yes** and exiting is what triggers the write-back to `/etc/nixos` as root.
+- Answering **No** discards silently — sudoedit sees an unchanged temp file and writes nothing back.
+- You cannot `:w` to the real path from inside (E212: you'd need to be root).
+
+After a `sudoedit`-based rebuild, run `./cfg.sh pull` so the repo snapshot doesn't drift from the live config.

@@ -1,3 +1,5 @@
+## Proposed script only, for review and implementation later.
+
 #!/usr/bin/env bash
 # ~/nix-config/cfg.sh
 set -euo pipefail
